@@ -3,32 +3,22 @@ boolean normals = false;
 ArrayList<Bubble> bubblesArr = new ArrayList<Bubble>();
 ArrayList<Vertices> verticesArr = new ArrayList<>();
 PVector clr = new PVector(0, 0, 0);
-float t = 0.5;
+float t = 0.999;
 
 
 void setup() {
   size(600, 600, P3D);
   randomSeed(second());
-  Bubble b = new Bubble(60, new PVector(200, 300), 60);
-  Bubble c = new Bubble(80, new PVector(300, 300), 60);
-  Bubble d = new Bubble(60, new PVector(240, 300), 60);
+  Bubble b = new Bubble(120, new PVector(300, 300), 360);
+  Bubble c = new Bubble(80, new PVector(300, 600), 360);
+  Bubble d = new Bubble(60, new PVector(180, 300), 360);
   Bubble e = new Bubble(80, new PVector(360, 400), 60);
 
+  bubblesArr.add(c);
+  
   bubblesArr.add(b);
   
-  //bubblesArr.add(c);
-  
-  /*for(int i = 0; i < bubblesArr.get(1).vertices.size(); i++){
-    Vertices v = bubblesArr.get(1).vertices.get(i);
-    PVector p = PVector.mult(v.norm, random(-20, 20));
-    if(verticesArr.size() > 0){
-      float dis = verticesArr.get(i-1).pos.dist(bubblesArr.get(1).vertices.get(i-1).pos);
-      //dis += 2;
-      p = PVector.mult(v.norm, random(dis-2, dis+2));
-    }
-    verticesArr.add(new Vertices(PVector.add(p, v.pos), v.norm));
-  }*/
-  //bubblesArr.add(d);
+  bubblesArr.add(d);
   //bubblesArr.add(e);
   
 }
@@ -41,19 +31,21 @@ PVector rotatePoint(PVector fp, PVector pt, float a) {
   return new PVector(fp.x+xRot, fp.y+yRot);
 }
 
-void handleCollisions() {
+void coal() {
   
   for(var b : bubblesArr){
     b.undrawableVertices.clear();
   }
+  for(int h = 0; h<bubblesArr.size(); h++){
+    for(int i = 0; i<bubblesArr.get(h).vertices.size(); i++){
+      bubblesArr.get(h).vertices.get(i).constrained = false;
+    }
+  }
   for (int h = 0; h < bubblesArr.size(); h++) {
     Bubble b1 = bubblesArr.get(h);
-    b1.vertices = copyVerticeList(b1.backUp);
-    //copyVerticesList(b1.vertices, b1.backUp);
-    int h1 = b1.hashCode();
     for (int j = h+1; j < bubblesArr.size(); j++) {
       Bubble b2 = bubblesArr.get(j);
-      int h2 = b2.hashCode();
+      System.out.println(b2.center);
       PVector pt1, pt2;
       int i1 = 0;
       int i2 = 0;
@@ -77,27 +69,8 @@ void handleCollisions() {
       }
 
       d = PVector.sub(b1.center, b2.center).mag();
-      PVector s = PVector.sub(b1.center, b2.center);
-      s.div(3);
       
-      PVector s1 = PVector.add(b2.center, s);
-      
-      strokeWeight(3);
-      //point(s1.x, s1.y);
-      strokeWeight(1);
-      //System.out.println(b1.center.dist(b2.center));
       if (d < abs(b1.radius+b2.radius)) {
-        /*if(b1.center.dist(b2.center) <= R){
-          t = 0;
-          b2.radius += b2.radius - b1.radius;
-          bubblesArr.remove(0);
-          b2.move(s1);
-        }*/
-        if(!b1.collideWith.contains(h2) && !b2.collideWith.contains(h1)){
-          b1.collideWith.add(h2);
-          b2.collideWith.add(h1);
-        }
-        //System.out.println("Oui && " + h + " && " + j);
         dx = cx - Cx;
         dy = cy - Cy;
         float x = (dx / d) * R + Cx;
@@ -107,195 +80,190 @@ void handleCollisions() {
         float angle = acos((r*r-d*d-R*R)/(-2.0*d*R));
         pt1 = rotatePoint(C, P, +angle);
         pt2 = rotatePoint(C, P, -angle);
-        
         PVector c = PVector.sub(pt2, pt1);
         c.div(2);
         c.add(pt1);
         PVector n = PVector.sub(c, b2.center).normalize();
         float pressure = (b1.radius - b2.radius)*r*0.01;
-        /*if(b1.collideWith.size() < 3)*/ 
-        //line(pt1.x, pt1.y, pt2.x, pt2.y);
         float minDist1 = 10000;
         float minDist2 = 10000;
         float bminDist1 = 10000;
         float bminDist2 = 10000;
         for (int i = 0; i < b1.vertices.size(); i++) {
-          if (minDist1 > pt1.dist(b1.vertices.get(i).pos)) {
+          if (minDist1 >= pt1.dist(b1.vertices.get(i).pos)) {
             minDist1 = pt1.dist(b1.vertices.get(i).pos);
             i1 = i;
           }
-          if (minDist2 > pt2.dist(b1.vertices.get(i).pos)) {
+          if (minDist2 >= pt2.dist(b1.vertices.get(i).pos)) {
             minDist2 = pt2.dist(b1.vertices.get(i).pos);
             i2 = i;
           }
         }
 
         for (int i = 0; i < b2.vertices.size(); i++) {
-          if (bminDist1 > pt1.dist(b2.vertices.get(i).pos)) {
+          if (bminDist1 >= pt1.dist(b2.vertices.get(i).pos)) {
             bminDist1 = pt1.dist(b2.vertices.get(i).pos);
             j1 = i;
           }
-          if (bminDist2 > pt2.dist(b2.vertices.get(i).pos)) {
+          if (bminDist2 >= pt2.dist(b2.vertices.get(i).pos)) {
             bminDist2 = pt2.dist(b2.vertices.get(i).pos);
             j2 = i;
           }
         }
-
+        
         int temp1 = i1;
         int temp2 = j1;
         i1 = abs(i1 - i2) > b1.vertices.size()/2 ? max(i1, i2) : min(i1, i2);
         i2 = abs(temp1 - i2) > b1.vertices.size()/2 ? min(temp1, i2) : max(temp1, i2);
-        j1 = abs(j1 - j2) > b1.vertices.size()/2 ? max(j1, j2) : min(j1, j2);
-        j2 = abs(temp2 - j2) > b1.vertices.size()/2 ? min(temp2, j2) : max(temp2, j2);
-
-        /*if(abs(i1 - i2) > b1.vertices.size()/2){
-          int temp = i1;
-          i1 = max(i1, i2);
-          i2 = min(i2, temp);    
-        }
-        else{
-          int temp = i1;
-          i1 = min(i1, i2);
-          i2 = max(i2, temp);    
-        }*/
+        j1 = abs(j1 - j2) > b2.vertices.size()/2 ? max(j1, j2) : min(j1, j2);
+        j2 = abs(temp2 - j2) > b2.vertices.size()/2 ? min(temp2, j2) : max(temp2, j2);
+        b1.vertices.get(i1).constrained = true;
+        b1.vertices.get(i2).constrained = true;
+        b2.vertices.get(j1).constrained = true;
+        b2.vertices.get(j2).constrained = true;
+        strokeWeight(4);
+        point(b2.vertices.get(j1).pos.x, b2.vertices.get(j1).pos.y);
+        point(b2.vertices.get(j2).pos.x, b2.vertices.get(j2).pos.y);
+        strokeWeight(1);
         int steps = 0;
-        //System.out.println(i1 + " && " + i2);
         for (int i = i1; i%b1.vertices.size() != i2; i++) {
           steps++;
-          //System.out.println(i);
-          //vert.add(i%b1.vertices.size());
-          //b1.undrawableVertices.add(i%b1.vertices.size());
         }
         int aa = 0;
         for (int i = i1; i%b1.vertices.size() != i2; i++) {
-          //System.out.println(i);
           float t = aa / float(steps);
-          float x1 = bezierPoint(pt2.x, c.x+(n.x*pressure), c.x+(n.x*pressure), pt1.x, t);
-          float y1 = bezierPoint(pt2.y, c.y+(n.y*pressure), c.y+(n.y*pressure), pt1.y, t);
+          float x1 = bezierPoint(b1.vertices.get(i1).pos.x, c.x+(n.x*pressure), c.x+(n.x*pressure), b1.vertices.get(i2).pos.x, t);
+          float y1 = bezierPoint(b1.vertices.get(i1).pos.y, c.y+(n.y*pressure), c.y+(n.y*pressure), b1.vertices.get(i2).pos.y, t);
           b1.vertices.get(i%b1.vertices.size()).pos.x = x1;
           b1.vertices.get(i%b1.vertices.size()).pos.y = y1;
-          aa++;
-        }
-        for (int i = j1; i%b2.vertices.size() != j2; i++) {
-          b2.undrawableVertices.add(i%b2.vertices.size());
-        }
-        
-        //System.out.println(b.i1 + " && " + b.i2);
-        /*if (b.center.y <= b1.center.y + 60) b1.z = 0;
-        else b1.z = z2;*/
-        //bezier(pt1.x, pt1.y, c.x+(n.x*pressure), c.y+(n.y*pressure), c.x+(n.x*pressure), c.y+(n.y*pressure), pt2.x, pt2.y);
-        /*int steps = b1.undrawableVertices.size();
-        for (int i = 0; i <= steps; i++) {
-          float t = i / float(steps);
-          float x1 = bezierPoint(pt1.x, c.x+(n.x*pressure), c.x+(n.x*pressure), pt2.x, t);
-          float y1 = bezierPoint(pt1.y, c.y+(n.y*pressure), c.y+(n.y*pressure), pt2.y, t);
-          strokeWeight(3);
+          strokeWeight(4);
           stroke(255,0,0);
-          b1.vertices.get(i).pos.x = x1;
-          b1.vertices.get(i).pos.y = y1;
           point(x1, y1);
+          stroke(0);
           strokeWeight(1);
-          //ellipse(x1, y1, 10, 10);
-        }*/
-      }
-      else{
-        if(b1.collideWith.contains(h2) && b2.collideWith.contains(h1)){
-          b1.collideWith.remove(new Integer(h2));
-          b2.collideWith.remove(new Integer(h1));
+          aa++;
+          b1.undrawableVertices.add(i%b2.vertices.size());
+        }
+        steps=0;
+        for (int i = j1; i%b2.vertices.size() != j2; i++) {
+          steps++;
+        }
+        aa = 0;
+        for (int i = j1; i%b2.vertices.size() != j2; i++) {
+          float t = aa / float(steps);
+          float x1 = bezierPoint(b2.vertices.get(j1).pos.x, c.x+(n.x*pressure), c.x+(n.x*pressure), b2.vertices.get(j2).pos.x, t);
+          float y1 = bezierPoint(b2.vertices.get(j1).pos.y, c.y+(n.y*pressure), c.y+(n.y*pressure), b2.vertices.get(j2).pos.y, t);
+          b2.vertices.get(i%b2.vertices.size()).pos.x = x1;
+          b2.vertices.get(i%b2.vertices.size()).pos.y = y1;
+          aa++;
         }
       }
     }
-    //b1.undrawableVertices = vert;
   }
 }
 
-void forceCircle(float t){
-  
-    /*float radius = 60;
-    PVector center = new PVector(300,300);
-    int nbVertices = 30;
-    float angle = radians(360/nbVertices);
-    PVector rad = new PVector(0, -radius);
-    ArrayList<Vertices> vertices = new ArrayList<>();
-    ArrayList<Edges> edges = new ArrayList<>();
-    for (int i = 0; i<30; i++) {
-      PVector pos = rad.copy();
-      pos.x += center.x;
-      pos.y += center.y;
-      Vertices v = new Vertices(pos, rad.copy().normalize());
-      vertices.add(v);
-      //System.out.println(v.pos + " && " + v.norm);
-      rad.rotate(angle);
-    }*/
-    for(int i = 0; i < verticesArr.size(); i++){
-      Vertices v = verticesArr.get(i);
-      Vertices v2 = bubblesArr.get(1).vertices.get(i);
-      PVector p = PVector.sub(v2.pos, v.pos).normalize();
+/*void forceCircle(float t){
+    for(int i = 0; i < bubblesArr.get(0).vertices.size(); i++){
+      PVector r = new PVector(0, -bubblesArr.get(0).radius);
+      float angle = radians(360/bubblesArr.get(0).vertices.size());
+      PVector r2 = r.copy().rotate(angle*i);
+      r2.add(bubblesArr.get(0).center);
+      Vertices v2 = bubblesArr.get(0).vertices.get(i);
+      PVector p = PVector.sub(r2, v2.pos).normalize();
       
-      if(v.pos.dist(v2.pos) > 1){
-        v.pos.add(PVector.mult(p, 3*t));
-        //System.out.println(v.pos);
+      if(r2.dist(v2.pos) > 1){
+        v2.pos.add(PVector.mult(p, 3*t));
       }
       else{
-        v.pos = v2.pos;
+        v2.pos = r2;
+        v2.vit = new PVector(0,0);
       }
     }
-}
+}*/
+
 
 void draw() {
   background(255);
-  circle(200, 300, 120);
-  for(var v : bubblesArr.get(0).vertices){
-    strokeWeight(3);
-    point(v.pos.x, v.pos.y);
-    strokeWeight(1);
-  }
-  /*System.out.println((6)%4);
-  for(int i = 0; i<verticesArr.size(); i++){
-    Vertices v1 = verticesArr.get(i);
-    Vertices v2 = verticesArr.get((i+1)%verticesArr.size());
-    line(v1.pos.x, v1.pos.y, v2.pos.x, v2.pos.y);
-  }*/
-  //bubblesArr.get(0).center = new PVector(mouseX, mouseY);
-  //bubblesArr.get(0).move(new PVector(mouseX, mouseY));
-  //bubblesArr.get(0).move(new PVector(bubblesArr.get(0).center.x, bubblesArr.get(0).center.y-t));
-  //System.out.println(bubblesArr.get(1).collideWith.size()); //bubblesArr.get(1).center.y -= bubblesArr.get(1).z;
-
-  //forceCircle(0.08);
-  /*Check CoLlision*/
-  /*for (int i = 0; i < bubblesArr.size()-1; i++)
-    for (int j = i+1; j < bubblesArr.size(); j++)
-      bubblesArr.get(i).detectCollision(bubblesArr.get(j*/
-  handleCollisions();
+  bubblesArr.get(0).move(new PVector(mouseX+80, mouseY+80));
+  coal();
 
   for (int i = 0; i < bubblesArr.size(); i++) {
     //bubblesArr.get(i).update();
     bubblesArr.get(i).draw(clr);
+    bubblesArr.get(i).waves(0);
     if (normals) bubblesArr.get(i).drawNormals();
   }
-
-  // bubblesArr.get(0).waves();
-  //bubblesArr.get(0).draw(clr);
 }
 
 
-
+void mousePressed() {
+  
+  /*for(int i = 0; i<bubblesArr.get(0).vertices.size();i++){
+    //System.out.println(mouseY-120);
+    if(abs(bubblesArr.get(0).vertices.get(i).pos.x - mouseX) < 50){
+      //((mouseY-(height/2))*((SIZE - abs(i - mouseX))/SIZE) - pos[i])*STRENGTH;
+      float pos = round((bubblesArr.get(0).vertices.get(i).pos.dist(new PVector(bubblesArr.get(0).vertices.get(i).pos.y, 120))));
+      float d0 = ((mouseY-120)* ((50 - abs(bubblesArr.get(0).vertices.get(i).pos.x - mouseX))/50) - pos) *0.05;
+      PVector n = PVector.mult(bubblesArr.get(0).vertices.get(i).norm, d0);
+      System.out.println(n);
+      bubblesArr.get(0).vertices.get(i).vit.add(n);
+    }
+  }*/
+  /*for(int i = 0; i<bubblesArr.size();i++){
+    PVector mous = new PVector(mouseX, mouseY);
+    if(bubblesArr.get(i).center.dist(mous) < bubblesArr.get(i).radius){
+      System.out.println(bubblesArr.get(i).center + " && " + bubblesArr.get(i).center.dist(mous));
+      bubblesArr.remove(i);
+    }
+  }*/
+  /*for(int i = 0; i<bubblesArr.get(0).vertices.size(); i++){
+    PVector m = new PVector(mouseX, mouseY);
+    if(m.dist(bubblesArr.get(0).vertices.get(i).pos) < 50){
+      //System.out.println("Oui");
+      float d = ((50-m.dist(bubblesArr.get(0).vertices.get(i).pos))/50)*30;
+      //System.out.println(i);
+      bubblesArr.get(0).vertices.get(i).vit.add(PVector.mult(bubblesArr.get(0).vertices.get(i).norm, -d));
+    }
+  }*/
+  /*if (mouseY < 30) return;
+    for (int i = 0; i < width; i++) {
+      if (abs(i - mouseX) < SIZE)
+        vel[i] += ((mouseY-(height/2))*((SIZE - abs(i - mouseX))/SIZE) - pos[i])*STRENGTH; 
+    }*/
+    /*float strength = 100;
+    PVector mous = new PVector(mouseX, mouseY);
+    System.out.println("Oui");
+    float minDist1 = 10000;
+    int i1 = 0;
+    for (int i = 0; i < bubblesArr.get(0).vertices.size(); i++) {
+      if (minDist1 > bubblesArr.get(0).vertices.get(i).pos.dist(mous)) {
+        minDist1 = bubblesArr.get(0).vertices.get(i).pos.dist(mous);
+        i1 = i;
+      }
+    }
+    
+    if(mous.dist(bubblesArr.get(0).center) < 60) strength*=-1;
+    bubblesArr.get(0).vertices.get(i1).vit.add(PVector.mult(bubblesArr.get(0).vertices.get(i1).norm, strength));*/
+    /*for(int i = 40; i< 45; i++){
+      bubblesArr.get(0).vertices.get(i).vit.add(PVector.mult(bubblesArr.get(0).vertices.get(i).norm, -20));
+    }*/
+    //bubblesArr.get(0).vertices.get(45).vit.add(new PVector(0,-10));
+    /*bubblesArr.get(0).vertices.get(43).vit.add(new PVector(50,0));
+    bubblesArr.get(0).vertices.get(44).vit.add(new PVector(50,0));
+    bubblesArr.get(0).vertices.get(45).vit.add(new PVector(50,0));
+    bubblesArr.get(0).vertices.get(46).vit.add(new PVector(50,0));
+    bubblesArr.get(0).vertices.get(47).vit.add(new PVector(50,0));*/
+}
 
 
 
 
 void keyPressed() {
   if (key == '+') {
-    /*for(Bubble b : bubblesArr){
-     b.radius += 1; b.update();
-     }*/
     bubblesArr.get(1).radius++;
     bubblesArr.get(1).update();
   }
   if (key == '-') {
-    /*for(Bubble b : bubblesArr){
-     b.nbVertices -= 1; b.update();
-     }*/
     bubblesArr.get(1).radius--;
     bubblesArr.get(1).update();
   }

@@ -4,6 +4,8 @@ import toxi.util.*;
 import toxi.util.datatypes.*;
 import toxi.processing.*;
 
+import java.util.Collections;
+
 FloatRange xpos, ypos;
 ToxiclibsSupport gfx;
 
@@ -17,7 +19,6 @@ boolean doShowHelp=false;
 boolean doClip;
 boolean doSave;
 
-float smallerRadius = 20;
 
 float greaterRadius = 80;
 
@@ -43,14 +44,17 @@ void setup() {
 
   /*  Add Random bubble in center  */
   Bubble b = new Bubble(60, new PVector(200, 300), 60);
-  Bubble c = new Bubble(20, new PVector(300, 300), 60);
-  Bubble d = new Bubble(80, new PVector(240, 300), 60);
+  Bubble c = new Bubble(60, new PVector(240, 300), 60);
+  Bubble d = new Bubble(60, new PVector(240, 340), 60);
+
   Bubble e = new Bubble(50, new PVector(360, 400), 60);
+  Bubble f = new Bubble(20, new PVector(260, 400), 60);
 
   bubblesArr.add(b);
   bubblesArr.add(c);
   bubblesArr.add(d);
-  bubblesArr.add(e);
+  //bubblesArr.add(e);
+  //bubblesArr.add(f);
   background(255);
 }
 
@@ -63,8 +67,26 @@ void draw() {
   voronoi = new Voronoi();
 
   addBoundingBox();
-  for(int i=0; i<bubblesArr.size(); i++){
-    //bubblesArr.get(i).move();
+   for(int i=0; i<bubblesArr.size(); i++){
+     stroke(0,255,0);
+     voronoi.addPoint(new Vec2D(bubblesArr.get(i).center.x, bubblesArr.get(i).center.y));
+
+     stroke(255,0,0);
+     bubblesArr.get(i).drawCircle();
+   }
+   if(voronoiDone()){
+
+ // background(255);
+      for(int i=0; i<bubblesArr.size(); i++){
+         stroke(255,0,0);
+         bubblesArr.get(i).drawCircle();
+      }
+
+   }
+
+
+/*  for(int i=0; i<bubblesArr.size(); i++){
+    bubblesArr.get(i).move();
 
     stroke(0,255,0);
     voronoi.addPoint(new Vec2D(bubblesArr.get(i).center.x, bubblesArr.get(i).center.y));
@@ -75,7 +97,7 @@ void draw() {
 
   for(int i=0; i<bubblesArr.size(); i++){
     poly.add(new Vec2D(bubblesArr.get(i).center.x,bubblesArr.get(i).center.y));
-  }
+  }*/
 
 
   // draw all voronoi polygons, clip them if needed...
@@ -108,8 +130,14 @@ void draw() {
     }
   }
 
+}
 
-
+boolean voronoiDone(){
+  for(int i=0; i<bubblesArr.size(); i++){
+    if(bubblesArr.get(i).over == false)
+      return false;
+  }
+  return true;
 }
 
 void keyPressed() {

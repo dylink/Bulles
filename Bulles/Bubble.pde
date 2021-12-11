@@ -1,271 +1,109 @@
-ArrayList<Vertices> copyVerticeList(ArrayList<Vertices> b){
-  
-  ArrayList<Vertices> a = new ArrayList<>();
-  for(var v : b){
-    Vertices v1 = new Vertices(v.pos.copy(), v.norm.copy());
-    a.add(v1);
-  }
-  
-  return a;
-}
-
 class Bubble {
-  ArrayList<Vertices> vertices;
-  ArrayList<Vertices> backUp;
-  ArrayList<Edges> edges;
-  ArrayList<Integer> undrawableVertices;
-  ArrayList<Integer> collideWith;
-  float radius;
-  float perim;
-  float area;
-  float nbVertices;
+
   PVector center;
-  float z;
-  float z2;
-  boolean isColliding;
-  
-  PVector n;
-  int i1, i2;
+  float radius;
+  float rad=1;
+  PVector pos = new PVector(0,0);
+  float nbVertices;
+  PVector positionToGo = new PVector(0,0);
+  ArrayList<Vertices> vertices;
+  ArrayList<ArrayList<Vertices>> hideVertices;
+  ArrayList<Vertices> fromVertices;
+  float alive = 1;
 
   Bubble(float r, PVector c, float n) {
-    isColliding = false;
-    
-    z = 0.3;
-    z2 = z * 14;
-    i1 = 0;
-    i2 = 0;
-    //n = rad.copy().normalize();
-    collideWith = new ArrayList<>();
     radius = r;
     center = c;
-    area = PI * r*r;
     nbVertices = n;
-    float angle = radians(360/nbVertices);
-    PVector rad = new PVector(0, -radius);
-    vertices = new ArrayList<>();
-    float freq = 10;
-    float amp = 5;
-    //backUp.addAll(vertices);
-    
-    edges = new ArrayList<>();
-    undrawableVertices = new ArrayList<>();
-    for (int i = 0; i<n; i++) {
-      float ang = i * angle;
-      PVector pos1 = new PVector(center.x+(r+amp*sin(freq*ang))*cos(ang), center.y+(r+amp*sin(freq*ang))*sin(ang));
-      PVector pos = rad.copy();
-      
-      pos.x += center.x;
-      pos.y += center.y;
-      Vertices v = new Vertices(pos1, rad.copy().normalize());
-      vertices.add(v);
-      //System.out.println(v.pos + " && " + v.norm);
-      rad.rotate(angle);
-    }
-    for(int i = 0; i < vertices.size(); i++){
-      edges.add(new Edges(vertices.get(i), vertices.get((i+1)%vertices.size())));
-    }
-    backUp = copyVerticeList(vertices);
-    /*backUp = new ArrayList<>();
-    for(var v : vertices){
-      Vertices v1 = new Vertices(v.pos.copy(), v.norm.copy());
-      backUp.add(v1);
-    }*/
-    System.out.println(vertices.size());
+    pos=c;
+    positionToGo.x = xpos.pickRandom();
+    positionToGo.y = ypos.pickRandom();
   }
 
-  
-
-  void draw(PVector col) {
-    //drawableVertices = new ArrayList<>(vertices);
-    /*undrawableVertices = new ArrayList<>();
-    //System.out.println(i1 + " && " + i2);
-    for(int i = i1; i%vertices.size() != i2; i++){
-      //System.out.println(i);
-      undrawableVertices.add(i%vertices.size());
-    }*/
-    //System.out.println(undrawableVertices);
-    stroke(col.x, col.y, col.z);
-    /*int m1 = min(i1, i2);
-    int m2 = max(i1, i2);*/
-    //drawableVertices.subList(m1, m2).clear();
-    //System.out.println(undrawableVertices);
-    for (int i = 0; i < vertices.size(); i++) {
-      /*Edges e = edges.get(i);
-      line(e.v1.pos.x, e.v1.pos.y, e.v2.pos.x, e.v2.pos.y);*/
-      //if(i > 10)
-      //System.out.println(i + " " + (i+1)%vertices.size());
-      if(!undrawableVertices.contains(i)) line(vertices.get(i).pos.x, vertices.get(i).pos.y, vertices.get((i+1)%vertices.size()).pos.x, vertices.get((i+1)%vertices.size()).pos.y);
-      /*if((i%vertices.size() >= i1 && i%vertices.size() < i2)){
-        //System.out.println(i + " && " + i1 + " && " + i2);
-        line(vertices.get(i).pos.x, vertices.get(i).pos.y, vertices.get((i+1)%vertices.size()).pos.x, vertices.get((i+1)%vertices.size()).pos.y);
-      }*/
-      /*if ((i >= m1 && i < m2) ^ (m2 - m1 > vertices.size()/2)) {
-        continue;
-      } 
-      else {
-        line(vertices.get(i).pos.x, vertices.get(i).pos.y, vertices.get((i+1)%vertices.size()).pos.x, vertices.get((i+1)%vertices.size()).pos.y);
-      }*/
-    }
-    strokeWeight(4);
-    point(center.x, center.y);
-    strokeWeight(1);
-  }
-
-  void drawNormals() {
-    for (int i = 0; i < vertices.size(); i++) {
-      stroke(255, 0, 0);
-      line(vertices.get(i).pos.x, vertices.get(i).pos.y, vertices.get(i).pos.x+vertices.get(i).norm.x*10, vertices.get(i).pos.y+vertices.get(i).norm.y*10);
-      stroke(0);
+  void move(){
+    if(floor(center.x) == floor(positionToGo.x)){
+      positionToGo.x = xpos.pickRandom();
+      positionToGo.y = ypos.pickRandom();
+    }else{
+      center.x = center.x <= positionToGo.x? center.x+0.5 : center.x-0.5;
+      center.y = center.y <= positionToGo.y? center.y+0.5 : center.y-0.5;
     }
   }
 
-  boolean betweenNumber(float a, float b, float value) {
-    if (a>b) {
-      float temp = a;
-      a = b;
-      b = temp;
-    }
-    if (a<=value && value<=b)
+  int circleNom(PVector p, int r){
+    int ret=0;
+    int x0 =(int)pos.x, y0=(int)pos.y;
+    int x, y, del, incH, incO;
+    float t = 1/sqrt(2) * r + 1;
+    del = 3 - (r << 1);
+    incH = 6;
+    incO = 10 - (r << 2);
+    PVector n = new PVector(0,0);
+      for(x = 0, y = r; x <= t; x++, incH += 4, incO += 4) {
+        if(inScreen(x0 + x, y0 + y)) if(pxlIsWhite(x0 + x, y0 + y)) {point(x0 + x, y0 + y); ret=1;vertices.add(new Vertices(new PVector(x0 + x, y0 + y), n));}
+        if(inScreen(x0 + x, y0 - y)) if(pxlIsWhite(x0 + x, y0 - y)) {point(x0 + x, y0 - y); ret=1;vertices.add(new Vertices(new PVector(x0 + x, y0 - y), n));}
+        if(inScreen(x0 - x, y0 + y)) if(pxlIsWhite(x0 - x, y0 + y)) {point(x0 - x, y0 + y); ret=1;vertices.add(new Vertices(new PVector(x0 - x, y0 + y), n));}
+        if(inScreen(x0 - x, y0 - y)) if(pxlIsWhite(x0 - x, y0 - y)) {point(x0 - x, y0 - y); ret=1;vertices.add(new Vertices(new PVector(x0 - x, y0 - y), n));}
+        if(inScreen(x0 + y, y0 + x)) if(pxlIsWhite(x0 + y, y0 + x)) {point(x0 + y, y0 + x); ret=1;vertices.add(new Vertices(new PVector(x0 + y, y0 + x), n));}
+        if(inScreen(x0 + y, y0 - x)) if(pxlIsWhite(x0 + y, y0 - x)) {point(x0 + y, y0 - x); ret=1;vertices.add(new Vertices(new PVector(x0 + y, y0 - x), n));}
+        if(inScreen(x0 - y, y0 + x)) if(pxlIsWhite(x0 - y, y0 + x)) {point(x0 - y, y0 + x); ret=1;vertices.add(new Vertices(new PVector(x0 - y, y0 + x), n));}
+        if(inScreen(x0 - y, y0 - x)) if(pxlIsWhite(x0 - y, y0 - x)) {point(x0 - y, y0 - x); ret=1;vertices.add(new Vertices(new PVector(x0 - y, y0 - x), n));}
+        if(del < 0){ del += incH;}
+      else{
+          y--;
+          if(inScreen(x0 + x, y0 + y)) if(pxlIsWhite(x0 + x, y0 + y)) {point(x0 + x, y0 + y); ret=1;vertices.add(new Vertices(new PVector(x0 + x, y0 + y), n));}
+          if(inScreen(x0 + x, y0 - y)) if(pxlIsWhite(x0 + x, y0 - y)) {point(x0 + x, y0 - y); ret=1;vertices.add(new Vertices(new PVector(x0 + x, y0 - y), n));}
+          if(inScreen(x0 - x, y0 + y)) if(pxlIsWhite(x0 - x, y0 + y)) {point(x0 - x, y0 + y); ret=1;vertices.add(new Vertices(new PVector(x0 - x, y0 + y), n));}
+          if(inScreen(x0 - x, y0 - y)) if(pxlIsWhite(x0 - x, y0 - y)) {point(x0 - x, y0 - y); ret=1;vertices.add(new Vertices(new PVector(x0 - x, y0 - y), n));}
+          if(inScreen(x0 + y, y0 + x)) if(pxlIsWhite(x0 + y, y0 + x)) {point(x0 + y, y0 + x); ret=1;vertices.add(new Vertices(new PVector(x0 + y, y0 + x), n));}
+          if(inScreen(x0 + y, y0 - x)) if(pxlIsWhite(x0 + y, y0 - x)) {point(x0 + y, y0 - x); ret=1;vertices.add(new Vertices(new PVector(x0 + y, y0 - x), n));}
+          if(inScreen(x0 - y, y0 + x)) if(pxlIsWhite(x0 - y, y0 + x)) {point(x0 - y, y0 + x); ret=1;vertices.add(new Vertices(new PVector(x0 - y, y0 + x), n));}
+          if(inScreen(x0 - y, y0 - x)) if(pxlIsWhite(x0 - y, y0 - x)) {point(x0 - y, y0 - x); ret=1;vertices.add(new Vertices(new PVector(x0 - y, y0 - x), n));}
+          incO += 4;
+          del += incO;
+        }
+      }
+    return ret;
+  }
+
+   boolean inScreen(int x, int y){
+    if(0<=x && x<=width && 0<=y && y<=height){
       return true;
+    }
     return false;
   }
 
-  void waves() {
-
-    float x = random(-10, 10);
-    for (int i = 0; i<vertices.size()-1; i++) {
-
-      //vertices.get(i).vit = vertices.get(i).norm.copy().mult(x);
-      //vertices.get(i).pos.add(vertices.get(i).vit);
-      //vertices.get(i).pos.x *= cos(i);
-      //vertices.get(i).pos.y *= sin(i);
+  boolean pxlIsWhite(int x, int y){
+    color white = color(255,255,255);
+    color c = get(x,y);
+    if( c == white){
+      return true;
     }
+    return false;
   }
 
-  void detectCollision(Bubble b) {
-    undrawableVertices = new ArrayList<>();
-    //System.out.println(i1 + " && " + i2);
-    
-    PVector pt1, pt2;
-    i1 = 0;
-    i2 = 0;
-    b.i1 = 0;
-    b.i2 = 0;
-    float r, R, d, dx, dy, cx, cy, Cx, Cy;
-    if (radius < b.radius) {
-      r  = radius;
-      R = b.radius;
-      cx = center.x;
-      cy = center.y;
-      Cx = b.center.x;
-      Cy = b.center.y;
-    } else {
-      r  = b.radius;
-      R  = radius;
-      Cx = center.x;
-      Cy = center.y;
-      cx = b.center.x;
-      cy = b.center.y;
-    }
+  void drawCircle(){ //diagrow
+    stroke(center.x/2,0,center.y/2);
+    if(rad<=radius){
+      vertices = new ArrayList<>();
+      circleNom(pos, (int)rad);
+      rad+= radius/greaterRadius;
+      if(radius==50)
+        System.out.println(rad);
+    }else{
+        alive = 0;
+        System.out.println("end "+radius );
+        strokeWeight(3);
+         stroke(0,0,0);
+        for(int i=0; i<vertices.size(); i++){
+          point(vertices.get(i).pos.x,vertices.get(i).pos.y);
+         //  line(vertices.get(i).pos.x, vertices.get(i).pos.y, vertices.get((i+1)%vertices.size()).pos.x, vertices.get((i+1)%vertices.size()).pos.y);
 
-    d = PVector.sub(center, b.center).mag();
-
-    if (d < abs(radius+b.radius)) {
-      isColliding = true;
-      dx = cx - Cx;
-      dy = cy - Cy;
-      float x = (dx / d) * R + Cx;
-      float y = (dy / d) * R + Cy;
-      PVector P = new PVector(x, y);
-      PVector C = new PVector(Cx, Cy);
-      float angle = acos((r*r-d*d-R*R)/(-2.0*d*R));
-      pt1 = rotatePoint(C, P, +angle);
-      pt2 = rotatePoint(C, P, -angle);
-      PVector c = PVector.sub(pt2, pt1);
-      c.div(2);
-      c.add(pt1);
-      PVector n = PVector.sub(c, b.center).normalize();
-      float pressure = (radius - b.radius)*0.6;
-      //bezier(pt1.x, pt1.y, c.x+(n.x*pressure), c.y+(n.y*pressure), c.x+(n.x*pressure), c.y+(n.y*pressure), pt2.x, pt2.y);
-      //line(pt1.x, pt1.y, pt2.x, pt2.y);
-      float minDist1 = 10000;
-      float minDist2 = 10000;
-      float bminDist1 = 10000;
-      float bminDist2 = 10000;
-      for (int i = 0; i < vertices.size(); i++) {
-        if (minDist1 > pt1.dist(vertices.get(i).pos)) {
-          minDist1 = pt1.dist(vertices.get(i).pos);
-          i1 = i;
         }
-        if (minDist2 > pt2.dist(vertices.get(i).pos)) {
-          minDist2 = pt2.dist(vertices.get(i).pos);
-          i2 = i;
-        }
+        //circle(pos.x,pos.y,radius*2);
       }
-      
-      for (int i = 0; i < b.vertices.size(); i++) {
-        if (bminDist1 > pt2.dist(b.vertices.get(i).pos)) {
-          bminDist1 = pt2.dist(b.vertices.get(i).pos);
-          b.i1 = i;
-        }
-        if (bminDist2 > pt1.dist(b.vertices.get(i).pos)) {
-          bminDist2 = pt1.dist(b.vertices.get(i).pos);
-          b.i2 = i;
-        }
-      }
-      
-      for(int i = i1; i%vertices.size() != i2; i++){
-        //System.out.println(i);
-        undrawableVertices.add(i%vertices.size());
-      }
-      for(int i = b.i1; i%b.vertices.size() != b.i2; i++){
-        undrawableVertices.add(i%b.vertices.size());
-      }
-      //System.out.println(b.i1 + " && " + b.i2);
-      if(b.center.y <= center.y + 60) b.z = 0;
-      else b.z = z2;
-    }
-    else{
-      isColliding = false;
-    }
+
   }
 
-  PVector rotatePoint(PVector fp, PVector pt, float a) {
-    float x = pt.x - fp.x;
-    float y = pt.y - fp.y;
-    float xRot = (float)(x * Math.cos(a) + y * Math.sin(a));
-    float yRot = (float)(y * Math.cos(a) - x * Math.sin(a));
-    return new PVector(fp.x+xRot, fp.y+yRot);
-  }
 
-  void move(PVector m){
-    //System.out.println(backUp.size());
-    PVector temp = center;
-    center = m;
-    for(int i = 0; i < vertices.size(); i++){
-      //vertices.get(i).pos = PVector.add(PVector.sub(center, temp),backUp.get(i).pos);
-      backUp.get(i).pos.add(PVector.sub(center, temp));
-      vertices.get(i).pos.add(PVector.sub(center, temp));
-    }
-    System.out.println(vertices.get(5).pos + "  " + backUp.get(5).pos);
-  }
-  
-  void merge(){
-    
-  }
-  
-  void update() {
-    vertices.clear();
-    float angle = radians(360/nbVertices);
-    PVector rad = new PVector(0, radius);
-    vertices = new ArrayList<>();
-    for (int i = 0; i<nbVertices; i++) {
-      PVector pos = rad.copy();
-      pos.x += center.x;
-      pos.y += center.y;
-      Vertices v = new Vertices(pos, rad.copy().normalize());
-      vertices.add(v);
-      rad.rotate(angle);
-    }
-  }
 }
